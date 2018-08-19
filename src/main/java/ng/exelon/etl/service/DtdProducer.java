@@ -1,12 +1,8 @@
 package ng.exelon.etl.service;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.flink.api.common.functions.MapFunction;
@@ -23,16 +19,13 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.typeutils.PojoTypeInfo;
-import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ng.exelon.etl.BootstrapDatabase;
 
@@ -88,55 +81,44 @@ public class DtdProducer {
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 		
 
-//		TypeInformation[] types = new TypeInformation[53];
-//
-//		for(int i=0; i < types.length; i++)
-//			types[i] = TypeInformation.of(String.class);
-		
-		TypeInformation<DtdRecord> types = TypeExtractor.createTypeInfo(DtdRecord.class);
+		TypeInformation[] types = new TypeInformation[25];
 
-		DataSource<Map> input = env.createInput(JDBCInputFormat.buildJDBCInputFormat() 
+		for(int i=0; i < types.length; i++)
+			types[i] = TypeInformation.of(String.class);
+		
+		DataSource<Tuple> input = env.createInput(JDBCInputFormat.buildJDBCInputFormat() 
 				.setDrivername(BootstrapDatabase.DB_DRIVER) 
 				.setDBUrl(BootstrapDatabase.DB_CONNECTION) 
 				.setQuery("SELECT * FROM fin.dtd where value_date >= '" + DtdProducer.LAST_PULL + "'") 
-				.setUsername(BootstrapDatabase.DB_USER) 
+				.setUsername(BootstrapDatabase.DB_USER)
 				.setPassword(BootstrapDatabase.DB_PASSWORD) 
-				.finish(), types);//(DtdRecord.class, Arrays.asList("", "")));
-//				.finish(), new TupleTypeInfo(types));
-//		input.output(kafkaOutput())
+				.finish(), new TupleTypeInfo(types));
 		input.map(convertToFlatStrings())
-			.returns(DtdRecord.class)
+			.returns(String.class)
 			.output(kafkaOutput())
 			.withParameters(parameters.getConfiguration());
 		env.execute();
 		DtdProducer.LAST_PULL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-		log.info(">>>TimeThen now is " + DtdProducer.LAST_PULL);
+		log.info(">>>Last Pull now is " + DtdProducer.LAST_PULL);
 	}
 	
 	@SuppressWarnings("serial")
-	private MapFunction<Tuple, DtdRecord> convertToFlatStrings() {
-		return new MapFunction<Tuple, DtdRecord>() {
+	private MapFunction<Tuple, String> convertToFlatStrings() {
+		return new MapFunction<Tuple, String>() {
 			@Override
-			public DtdRecord map(Tuple value) throws Exception {
-				log.info("Map value = " + value);
-//				return value;
-//				value.entrySet().stream().forEach(x -> {
-////					x;
-//					System.out.println("Value = " + x);
-////					x;
-//				});
-//				String ret = "";
-//				for (int i = 0; i < value.size(); i++) {
-//					ret += value.entrySet().stream().map(arg0) + ";;;";
-//				}
-				return null;
+			public String map(Tuple value) throws Exception {
+				String ret = "";
+				for (int i = 0; i < value.getArity(); i++) {
+					ret += value.getField(i) + ";;;";
+				}
+				return ret;
 			}
 		};
 	}
 
 	@SuppressWarnings("serial")
-	private static OutputFormat<DtdRecord> kafkaOutput() {
-		return new OutputFormat<DtdRecord>() {
+	private static OutputFormat<String> kafkaOutput() {
+		return new OutputFormat<String>() {
 
 			private Producer<String, String> producer;
 
@@ -173,23 +155,22 @@ public class DtdProducer {
 			}
 
 			@Override
-			public void writeRecord(DtdRecord rc) throws IOException {
-//				String[] rcArr = rc.split(";;;");
-//				
-//				DtdRecord.Key cRKey = new DtdRecord.Key(
-//						rcArr[0], rcArr[1], rcArr[2]
-//				);
-//				
-//				DtdRecord cR = new DtdRecord(
-//						rcArr[0], rcArr[1], rcArr[2], rcArr[3], rcArr[4], rcArr[5], rcArr[6], rcArr[7], rcArr[8], rcArr[9],
-//						rcArr[10], rcArr[11], rcArr[12], rcArr[13], rcArr[14], rcArr[15], rcArr[16], rcArr[17], rcArr[18], rcArr[19],
-//						rcArr[20], rcArr[21], rcArr[22], rcArr[23], rcArr[24], rcArr[25], rcArr[26], rcArr[27], rcArr[28], rcArr[29],
-//						rcArr[30], rcArr[31], rcArr[32], rcArr[33], rcArr[34], rcArr[35], rcArr[36], rcArr[37], rcArr[38], rcArr[39],
-//						rcArr[40], rcArr[41], rcArr[42], rcArr[43], rcArr[44], rcArr[45], rcArr[46], rcArr[47], rcArr[48], rcArr[49],
-//						rcArr[50], rcArr[51], rcArr[52], cRKey
-//				);
-//				ProducerRecord<String, String> record = new ProducerRecord<>(topic, cR.getTran_id(), DtdProducer.MAPPER.writeValueAsString(cR));
-				ProducerRecord<String, String> record = new ProducerRecord<>(topic, rc.getTran_id(), DtdProducer.MAPPER.writeValueAsString(rc));
+			public void writeRecord(String rc) throws IOException {
+				String[] rcArr = rc.split(";;;");
+				
+				DtdRecord.Key cRKey = new DtdRecord.Key(
+						rcArr[0], rcArr[1], rcArr[2]
+				);
+				
+				DtdRecord cR = new DtdRecord(
+						rcArr[0], rcArr[1], rcArr[2], rcArr[3], rcArr[4], rcArr[5], rcArr[6], rcArr[7], rcArr[8], rcArr[9],
+						rcArr[10], rcArr[11], rcArr[12], rcArr[13], rcArr[14], rcArr[15], rcArr[16], rcArr[17], rcArr[18], rcArr[19],
+						rcArr[20], rcArr[21], rcArr[22], rcArr[23], rcArr[24], rcArr[25], rcArr[26], rcArr[27], rcArr[28], rcArr[29],
+						rcArr[30], rcArr[31], rcArr[32], rcArr[33], rcArr[34], rcArr[35], rcArr[36], rcArr[37], rcArr[38], rcArr[39],
+						rcArr[40], rcArr[41], rcArr[42], rcArr[43], rcArr[44], rcArr[45], rcArr[46], rcArr[47], rcArr[48], rcArr[49],
+						rcArr[50], rcArr[51], rcArr[52], cRKey
+				);
+				ProducerRecord<String, String> record = new ProducerRecord<>(topic, cR.getTran_id(), DtdProducer.MAPPER.writeValueAsString(cR));
 				producer.send(record);
 				
 			}
@@ -203,7 +184,7 @@ public class DtdProducer {
 	 
 	@Data
 	@AllArgsConstructor
-	private static class DtdRecord {
+	public static class DtdRecord {
 		private String part_tran_srl_num;
 	    private String tran_date;
 	    private String tran_id;
