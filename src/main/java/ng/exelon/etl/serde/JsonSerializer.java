@@ -1,4 +1,4 @@
-package ng.exelon.etl.service;
+package ng.exelon.etl.serde;
 
 import com.google.gson.Gson;
 import org.apache.kafka.common.serialization.Serializer;

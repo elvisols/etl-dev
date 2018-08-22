@@ -1,4 +1,4 @@
-package ng.exelon.etl;
+package ng.exelon.etl.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
