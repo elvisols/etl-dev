@@ -139,18 +139,18 @@ public class DtdProducer implements Serializable{
 				String ret = value;
 				
 				String[] rcArr = ret.split(";;;");
-				DtdRecord.Key cRKey = new DtdRecord.Key(
+				DtdKey dtdKey = new DtdKey(
 						rcArr[0], rcArr[1], rcArr[2]
 				);
-				DtdRecord cR = new DtdRecord(
+				DtdRecord dtdR = new DtdRecord(
 						rcArr[0], rcArr[1], rcArr[2], rcArr[3], rcArr[4], rcArr[5], rcArr[6], rcArr[7], rcArr[8], rcArr[9],
 						rcArr[10], rcArr[11], rcArr[12], rcArr[13], rcArr[14], rcArr[15], rcArr[16], rcArr[17], rcArr[18], rcArr[19],
-						rcArr[20], rcArr[21], cRKey
+						rcArr[20], rcArr[21]
 				);
 				
 				Message<DtdRecord> message = MessageBuilder
-						.withPayload(cR)
-						.setHeader(KafkaHeaders.MESSAGE_KEY, cR.getAcid().getBytes())
+						.withPayload(dtdR)
+						.setHeader(KafkaHeaders.MESSAGE_KEY, dtdR.getEntry_user_id())
 						.build();
 				
 				DtdProducer.oracleSauce.send(message);
@@ -179,7 +179,7 @@ public class DtdProducer implements Serializable{
 	@Data
 	@AllArgsConstructor
 	@NoArgsConstructor
-	public static class DtdRecord {
+	public class DtdRecord {
 		private String part_tran_srl_num;
 	    private String tran_date;
 	    private String tran_id;
@@ -233,15 +233,15 @@ public class DtdProducer implements Serializable{
 //	    private String vfd_user_id;
 //	    private String voucher_print_flg;
 	    private String acid;
-	    private Key key;
-	    
-	    @Data
-		@AllArgsConstructor
-	    private static class Key {
-	    	private String part_tran_srl_num;
-		    private String tran_date;
-		    private String tran_id;
-	    }
+//	    private Key key;
+	}
+	
+	@Data
+	@AllArgsConstructor
+	public class DtdKey {
+		private String part_tran_srl_num;
+		private String tran_date;
+		private String tran_id;
 	}
 	
 }

@@ -22,24 +22,17 @@ import ng.exelon.etl.service.DtdProducer.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
 @Component
-public class OracleSink {
+public class UserStatSink {
 
 	@StreamListener
 	@SendTo(EtlBindings.USER_STAT_OUT)
-	public KStream<String, UserStats> process(@Input(EtlBindings.ORACLE_SOURCE_IN) KStream<String, DtdRecord> records) {
+	public KStream[]<?, ?> process(@Input(EtlBindings.USER_STAT_OUT) KStream<String, UserStats> records) {
 		return records
-			.groupByKey()
-			.windowedBy(TimeWindows.of(TimeUnit.SECONDS.toMillis(6)).advanceBy(TimeUnit.SECONDS.toMillis(1)))
-			.aggregate(
-				UserStats::new,
-				(key, dtdRecord, userObj) -> userObj.compute(dtdRecord),
-				Materialized.<String, UserStats, WindowStore<Bytes, byte[]>>as(EtlBindings.USERSTATS_AGGREGATE_STORE)
-    			.withKeySerde(Serdes.String())
-                .withValueSerde(new UserStatsSerde()))
-			.filter((key, value) -> (key.window().start() - value.getTime()) >= 5000 ? true : false)
-			.toStream((key, value) -> key.key())
-//			.peek((key, value) -> System.out.println(key.isFilter() + " About to filter " + key))
-			.mapValues((userstat) -> userstat.computeZscore());
+				.branch(
+						(key, value) -> key.startsWith("A"), /* first predicate  */
+					    (key, value) -> key.startsWith("B"), /* second predicate */
+					    (key, value) -> true                 /* third predicate  */
+					  );
 	}
 	
 	static public final class UserStatsSerde extends WrapperSerde<UserStats> {
