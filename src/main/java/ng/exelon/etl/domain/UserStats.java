@@ -7,9 +7,10 @@ import java.util.List;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 
+import lombok.Data;
 import ng.exelon.etl.service.DtdProducer.DtdRecord;
 
-
+@Data
 public class UserStats {
 	private int creditCount;
 	private int debitCount;
@@ -47,6 +48,7 @@ public class UserStats {
 	private String timestamp;
 	private long time;
 	private String user;
+	private DtdRecord dtdRecord;
 	double tmpVariance;
 	
 	public UserStats() {	}
@@ -90,6 +92,8 @@ public class UserStats {
         this.timestamp = Instant.now().toString();
         
         this.user = dtdRecord.getEntry_user_id();
+        
+        this.dtdRecord = dtdRecord;
         
         return this;
 	}

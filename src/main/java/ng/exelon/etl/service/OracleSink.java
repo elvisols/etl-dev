@@ -15,9 +15,7 @@ import org.springframework.stereotype.Component;
 
 
 import ng.exelon.etl.domain.UserStats;
-import ng.exelon.etl.serde.JsonDeserializer;
-import ng.exelon.etl.serde.JsonSerializer;
-import ng.exelon.etl.serde.WrapperSerde;
+import ng.exelon.etl.serde.UserStatSerde;
 import ng.exelon.etl.service.DtdProducer.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
@@ -35,17 +33,17 @@ public class OracleSink {
 				(key, dtdRecord, userObj) -> userObj.compute(dtdRecord),
 				Materialized.<String, UserStats, WindowStore<Bytes, byte[]>>as(EtlBindings.USERSTATS_AGGREGATE_STORE)
     			.withKeySerde(Serdes.String())
-                .withValueSerde(new UserStatsSerde()))
+                .withValueSerde(new UserStatSerde()))
 			.filter((key, value) -> (key.window().start() - value.getTime()) >= 5000 ? true : false)
 			.toStream((key, value) -> key.key())
-//			.peek((key, value) -> System.out.println(key.isFilter() + " About to filter " + key))
+//			.peek((key, value) -> System.out.println(key		.isFilter() + " About to filter " + key))
 			.mapValues((userstat) -> userstat.computeZscore());
 	}
 	
-	static public final class UserStatsSerde extends WrapperSerde<UserStats> {
-        public UserStatsSerde() {
-            super(new JsonSerializer<UserStats>(), new JsonDeserializer<UserStats>(UserStats.class));
-        }
-    }
+	@StreamListener
+	public void process1(@Input(EtlBindings.ORACLE_SOURCE_IN) KStream<String, DtdRecord> records) {
+		records
+			.peek((key, value) -> System.out.println("key: " + key + " value: " + value));
+	}
 	
 }

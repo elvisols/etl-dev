@@ -1,13 +1,6 @@
 package ng.exelon.etl.service;
 
-import java.util.concurrent.TimeUnit;
-
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.state.WindowStore;
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -15,30 +8,33 @@ import org.springframework.stereotype.Component;
 
 
 import ng.exelon.etl.domain.UserStats;
-import ng.exelon.etl.serde.JsonDeserializer;
-import ng.exelon.etl.serde.JsonSerializer;
-import ng.exelon.etl.serde.WrapperSerde;
 import ng.exelon.etl.service.DtdProducer.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
 @Component
 public class UserStatSink {
 
+	@SuppressWarnings("unchecked")
 	@StreamListener
-	@SendTo(EtlBindings.USER_STAT_OUT)
-	public KStream[]<?, ?> process(@Input(EtlBindings.USER_STAT_OUT) KStream<String, UserStats> records) {
-		return records
+	@SendTo({EtlBindings.CREDIT_EXCEPTION_OUT, EtlBindings.DEBIT_EXCEPTION_OUT, EtlBindings.NORMAL_STAT_OUT})
+	public KStream<String, DtdRecord>[] process(@Input(EtlBindings.USER_STAT_IN) KStream<String, UserStats> records) {
+		KStream<String, DtdRecord>[] outputs = new KStream[3];
+		
+		KStream<String, UserStats>[] branches = records
 				.branch(
-						(key, value) -> key.startsWith("A"), /* first predicate  */
-					    (key, value) -> key.startsWith("B"), /* second predicate */
-					    (key, value) -> true                 /* third predicate  */
-					  );
+					(k, v) -> v.getCreditZscore() > 80, /* credit exception predicate  */
+				    (k, v) -> v.getDebitZscore() > 80, 	/* debit exception predicate */
+				    (k, v) -> true                 		/* normal statistics predicate  */
+				  );
+		
+		outputs[0] = branches[0]
+						.mapValues(value -> value.getDtdRecord());
+		outputs[1] = branches[1]
+				.mapValues(value -> value.getDtdRecord());
+		outputs[2] = branches[2]
+				.mapValues(value -> value.getDtdRecord());
+		
+		return outputs;
 	}
-	
-	static public final class UserStatsSerde extends WrapperSerde<UserStats> {
-        public UserStatsSerde() {
-            super(new JsonSerializer<UserStats>(), new JsonDeserializer<UserStats>(UserStats.class));
-        }
-    }
 	
 }
