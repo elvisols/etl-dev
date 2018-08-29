@@ -2,6 +2,7 @@ package ng.exelon.etl.service;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import javax.annotation.PostConstruct;
 
@@ -36,11 +37,6 @@ public class DtdProducer implements Serializable{
 	@Autowired
 	@Qualifier(EtlBindings.ORACLE_SOURCE)
 	private MessageChannel oracleSource;
-	
-//	private final MessageChannel oracleSource;
-//	public DtdProducer(EtlBindings binding) {
-//		this.oracleSource = binding.oracleSource();
-//	}
 	
 	private static MessageChannel oracleSauce;
 	
@@ -106,7 +102,7 @@ public class DtdProducer implements Serializable{
 		
 			DataSource<Tuple> input = env.createInput(JDBCInputFormat.buildJDBCInputFormat() 
 				.setDrivername("org.postgresql.ds.PGPoolingDataSource") 
-				.setDBUrl("jdbc:postgresql://localhost:5432/eagleye") 
+				.setDBUrl("jdbc:postgresql://localhost:5432/eagleeye") 
 				.setQuery("SELECT " +
 						"part_tran_srl_num," + 
 						"tran_date," + 
@@ -119,7 +115,7 @@ public class DtdProducer implements Serializable{
 						"lchg_time," + 
 						"lchg_user_id," + 
 						"part_tran_type," + 
-						"pstd_date," + 
+						"COALESCE(pstd_date,'1970-01-01 00:00:01')," + 
 						"pstd_flg," + 
 						"pstd_user_id," + 
 						"sol_id," + 
@@ -130,7 +126,7 @@ public class DtdProducer implements Serializable{
 						"tran_sub_type," + 
 						"value_date," + 
 						"acid " +
-						"FROM fin.dtd where value_date >= '" + DtdProducer.LAST_PULL + "'") 
+						"FROM finacle.dtd where value_date >= '" + DtdProducer.LAST_PULL + "' LIMIT 30") //LIMIT 3 OFFSET 2;
 				.setUsername("admin")
 				.setPassword("password") 
 				.finish(), new TupleTypeInfo(types));
@@ -145,7 +141,7 @@ public class DtdProducer implements Serializable{
 				DtdRecord dtdR = new DtdRecord(
 						rcArr[0], rcArr[1], rcArr[2], rcArr[3], rcArr[4], rcArr[5], rcArr[6], rcArr[7], rcArr[8], rcArr[9],
 						rcArr[10], rcArr[11], rcArr[12], rcArr[13], rcArr[14], rcArr[15], rcArr[16], rcArr[17], rcArr[18], rcArr[19],
-						rcArr[20], rcArr[21]
+						rcArr[20], rcArr[21], Instant.now().toEpochMilli()
 				);
 				
 				Message<DtdRecord> message = MessageBuilder
@@ -156,7 +152,7 @@ public class DtdProducer implements Serializable{
 				DtdProducer.oracleSauce.send(message);
 
 				DtdProducer.LAST_PULL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-				log.info("+++ Last Pull now is " + DtdProducer.LAST_PULL);
+//				log.info("+++ Last Pull now is " + DtdProducer.LAST_PULL);
 			});
 		env.execute();
 	}
@@ -234,6 +230,7 @@ public class DtdProducer implements Serializable{
 //	    private String voucher_print_flg;
 	    private String acid;
 //	    private Key key;
+	    private long log_time;
 	}
 	
 	@Data

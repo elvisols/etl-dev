@@ -1,11 +1,16 @@
 package ng.exelon.etl.domain;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import ng.exelon.etl.service.DtdProducer.DtdRecord;
@@ -48,12 +53,14 @@ public class UserStats {
 	private String timestamp;
 	private long time;
 	private String user;
+//	@JsonIgnore
 	private DtdRecord dtdRecord;
 	double tmpVariance;
 	
 	public UserStats() {	}
 	
 	public UserStats compute(DtdRecord dtdRecord) {
+//		System.out.println("dtdRecord: " + dtdRecord);
 		if(dtdRecord.getPart_tran_type().equals("C")) {
 			// Credit transactions
 			if (creditCount == 0) this.creditMin = Double.parseDouble(dtdRecord.getTran_amt());
@@ -86,8 +93,19 @@ public class UserStats {
 	        
 	        this.debitMean = this.debitSum / this.debitCount;
 		}
+		
+//		System.out.println("Counts now: " + creditCount + " " + debitCount);
+		
+		SimpleDateFormat f = new SimpleDateFormat("yyyy-mm-dd HH:MM:ss");
 
-		this.time = Instant.parse(dtdRecord.getValue_date()).toEpochMilli();
+//		try {
+//		    Date d = f.parse(dtdRecord.getValue_date());
+//		    this.time = d.getTime();
+////		    System.out.println("#####################  this.time = " + this.time);
+//		} catch (ParseException e) {
+//		    e.printStackTrace();
+//		}
+		this.time = dtdRecord.getLog_time();
 		
         this.timestamp = Instant.now().toString();
         
@@ -99,41 +117,64 @@ public class UserStats {
 	}
 	
 	public UserStats computeZscore() {
-		// get median
-		this.creditMedian = getMedian(this.creditAmountList);
-		this.debitMedian = getMedian(this.debitAmountList);
-		
-		// get variance
-		// Samples with low variance have data that is clustered closely about the mean.
-		// Samples with high variance have data that is spread far from the mean.
-		this.creditVariance = getVariance(this.creditAmountList, this.creditMedian, this.creditMean, this.creditCount);
-		this.creditSubList = this.subList;
-		this.debitVariance = getVariance(this.debitAmountList, this.debitMedian, this.debitMean, this.debitCount);
-		this.debitSubList = this.subList;
-		
-		// get standard deviation
-		this.creditSd =  Math.sqrt(this.creditVariance);
-		this.debitSd =  Math.sqrt(this.debitVariance);
+		if(!this.creditAmountList.isEmpty()) {
+			// get median
+			this.creditMedian = getMedian(this.creditAmountList);
+			
+			// get variance
+			// Samples with low variance have data that is clustered closely about the mean.
+			// Samples with high variance have data that is spread far from the mean.
+			this.creditVariance = getVariance(this.creditAmountList, this.creditMedian, this.creditMean, this.creditCount);
+			this.creditSubList = this.subList;
+			
+			// get standard deviation
+			this.creditSd =  Math.sqrt(this.creditVariance);
 
-		// get median absolute deviation
-		this.creditMad = getMedianAbsDeviation(creditSubList);
-		this.debitMad = getMedianAbsDeviation(debitSubList);
+			// get median absolute deviation
+			this.creditMad = getMedianAbsDeviation(creditSubList);
+			
+			/*
+			 * Calculating modified z-score as against the standard z-score
+			 * z-score = Remember, a z-score is a measure of how many standard deviations a data point is away from the mean.
+			 * A negative z-score indicates that the data point is less than the mean, and a positive z-score indicates the data point in question is larger than the mean.
+			 */
+			this.creditZscore = this.creditSd == 0.0 ? 0.0 : (this.creditAmountList.get(this.creditAmountList.size() - 1) - this.creditMean) / this.creditSd;
+			this.creditZscoreM = this.creditMad == 0.0 ? 0.0 : 0.6745 * (this.creditAmountList.get(this.creditAmountList.size() - 1) - this.creditMedian) / this.creditMad;
+			
+			this.creditZscoreRatio = String.format("%.1f", zScoreToPercentile(this.creditZscore));
+			this.creditZscoreRatioM = String.format("%.1f", zScoreToPercentile(this.creditZscoreM));
+		} 
 		
-		/*
-		 * Calculating modified z-score as against the standard z-score
-		 * z-score = Remember, a z-score is a measure of how many standard deviations a data point is away from the mean.
-		 * A negative z-score indicates that the data point is less than the mean, and a positive z-score indicates the data point in question is larger than the mean.
-		 */
-		this.creditZscore = this.creditSd == 0.0 ? 0.0 : (this.creditAmountList.get(this.creditAmountList.size() - 1) - this.creditMean) / this.creditSd;
-		this.debitZscore = this.debitSd == 0.0 ? 0.0 : (this.debitAmountList.get(this.debitAmountList.size() - 1) - this.debitMean) / this.debitSd;
-		this.creditZscoreM = this.creditMad == 0.0 ? 0.0 : 0.6745 * (this.creditAmountList.get(this.creditAmountList.size() - 1) - this.creditMedian) / this.creditMad;
-		this.debitZscoreM = this.debitMad == 0.0 ? 0.0 : 0.6745 * (this.debitAmountList.get(this.debitAmountList.size() - 1) - this.debitMedian) / this.debitMad;
+		if(!this.debitAmountList.isEmpty()) {
+			// get median
+			this.debitMedian = getMedian(this.debitAmountList);
+			
+			// get variance
+			// Samples with low variance have data that is clustered closely about the mean.
+			// Samples with high variance have data that is spread far from the mean.
+			this.debitVariance = getVariance(this.debitAmountList, this.debitMedian, this.debitMean, this.debitCount);
+			this.debitSubList = this.subList;
+			
+			// get standard deviation
+			this.debitSd =  Math.sqrt(this.debitVariance);
+
+			// get median absolute deviation
+			this.debitMad = getMedianAbsDeviation(debitSubList);
+			
+			/*
+			 * Calculating modified z-score as against the standard z-score
+			 * z-score = Remember, a z-score is a measure of how many standard deviations a data point is away from the mean.
+			 * A negative z-score indicates that the data point is less than the mean, and a positive z-score indicates the data point in question is larger than the mean.
+			 */
+			this.debitZscore = this.debitSd == 0.0 ? 0.0 : (this.debitAmountList.get(this.debitAmountList.size() - 1) - this.debitMean) / this.debitSd;
+			this.debitZscoreM = this.debitMad == 0.0 ? 0.0 : 0.6745 * (this.debitAmountList.get(this.debitAmountList.size() - 1) - this.debitMedian) / this.debitMad;
+			
+			this.debitZscoreRatio = String.format("%.1f", zScoreToPercentile(this.debitZscore));
+			this.debitZscoreRatioM = String.format("%.1f", zScoreToPercentile(this.debitZscoreM));
+//			this.debitZscoreRatio = String.format("%.1f", zScoreToPercentile(this.debitZscore)) + "%";
+//			this.debitZscoreRatioM = String.format("%.1f", zScoreToPercentile(this.debitZscoreM)) + "%";
+		}
 		
-		this.creditZscoreRatio = String.format("%.1f", zScoreToPercentile(this.creditZscore)) + "%";
-		this.debitZscoreRatio = String.format("%.1f", zScoreToPercentile(this.debitZscore)) + "%";
-		this.creditZscoreRatioM = String.format("%.1f", zScoreToPercentile(this.creditZscoreM)) + "%";
-		this.debitZscoreRatioM = String.format("%.1f", zScoreToPercentile(this.debitZscoreM)) + "%";
-        
 		return this;
 	}
 	
