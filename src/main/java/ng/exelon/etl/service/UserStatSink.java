@@ -9,12 +9,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
-import ng.exelon.etl.controllers.MessagesController;
 import ng.exelon.etl.domain.UserStats;
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
+import ng.exelon.etl.model.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
-@Slf4j
 @Component
 public class UserStatSink {
 	
@@ -25,7 +23,9 @@ public class UserStatSink {
 	@StreamListener
 	@SendTo({EtlBindings.CREDIT_EXCEPTION_OUT, EtlBindings.DEBIT_EXCEPTION_OUT, EtlBindings.NORMAL_STAT_OUT})
 	public KStream<String, DtdRecord>[] process(@Input(EtlBindings.USER_STAT_IN) KStream<String, UserStats> records) {
+		
 		KStream<String, DtdRecord>[] outputs = new KStream[3];
+		
 		records.foreach((key, value) ->  {
 			value.setCreditAmountList(null);
 			value.setDebitAmountList(null);

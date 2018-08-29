@@ -6,7 +6,7 @@ import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
 
 import ng.exelon.etl.domain.UserStats;
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
+import ng.exelon.etl.model.DtdRecord;
 
 public interface EtlBindings {
 	

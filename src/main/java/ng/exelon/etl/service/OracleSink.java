@@ -16,15 +16,13 @@ import org.springframework.stereotype.Component;
 
 
 import ng.exelon.etl.domain.UserStats;
+import ng.exelon.etl.model.DtdRecord;
 import ng.exelon.etl.serde.UserStatSerde;
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
 @Component
 public class OracleSink {
 
-	private static int count = 0;
-	
 	@StreamListener
 	@SendTo(EtlBindings.USER_STAT_OUT)
 	public KStream<String, UserStats> process(@Input(EtlBindings.ORACLE_SOURCE_IN) KStream<String, DtdRecord> records) {

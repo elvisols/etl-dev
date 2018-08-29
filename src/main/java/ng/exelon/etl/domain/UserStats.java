@@ -13,7 +13,7 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
+import ng.exelon.etl.model.DtdRecord;
 
 @Data
 public class UserStats {
@@ -61,35 +61,35 @@ public class UserStats {
 	
 	public UserStats compute(DtdRecord dtdRecord) {
 //		System.out.println("dtdRecord: " + dtdRecord);
-		if(dtdRecord.getPart_tran_type().equals("C")) {
+		if(dtdRecord.getPartTranType().equals("C")) {
 			// Credit transactions
-			if (creditCount == 0) this.creditMin = Double.parseDouble(dtdRecord.getTran_amt());
+			if (creditCount == 0) this.creditMin = Double.parseDouble(dtdRecord.getTranAmt());
 	        
 	        this.creditCount++;
 	        
-	        this.creditAmountList.add(Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.creditAmountList.add(Double.parseDouble(dtdRecord.getTranAmt()));
 	        
-	        this.creditSum += Double.parseDouble(dtdRecord.getTran_amt());
+	        this.creditSum += Double.parseDouble(dtdRecord.getTranAmt());
 	        
-	        this.creditMin = Math.min(this.creditMin, Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.creditMin = Math.min(this.creditMin, Double.parseDouble(dtdRecord.getTranAmt()));
 	        
-	        this.creditMax = Math.max(this.creditMax, Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.creditMax = Math.max(this.creditMax, Double.parseDouble(dtdRecord.getTranAmt()));
 	        
 	        this.creditMean = this.creditSum / this.creditCount;
 	        
 		} else {
 			// Debit transactions
-			if (debitCount == 0) this.debitMin = Double.parseDouble(dtdRecord.getTran_amt());
+			if (debitCount == 0) this.debitMin = Double.parseDouble(dtdRecord.getTranAmt());
 	        
 	        this.debitCount++;
 	        
-	        this.debitAmountList.add(Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.debitAmountList.add(Double.parseDouble(dtdRecord.getTranAmt()));
 	        
-	        this.debitSum += Double.parseDouble(dtdRecord.getTran_amt());
+	        this.debitSum += Double.parseDouble(dtdRecord.getTranAmt());
 	        
-	        this.debitMin = Math.min(this.debitMin, Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.debitMin = Math.min(this.debitMin, Double.parseDouble(dtdRecord.getTranAmt()));
 	        
-	        this.debitMax = Math.max(this.debitMax, Double.parseDouble(dtdRecord.getTran_amt()));
+	        this.debitMax = Math.max(this.debitMax, Double.parseDouble(dtdRecord.getTranAmt()));
 	        
 	        this.debitMean = this.debitSum / this.debitCount;
 		}
@@ -109,7 +109,7 @@ public class UserStats {
 		
         this.timestamp = Instant.now().toString();
         
-        this.user = dtdRecord.getEntry_user_id();
+        this.user = dtdRecord.getEntryUserId();
         
         this.dtdRecord = dtdRecord;
         

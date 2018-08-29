@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ng.exelon.etl.model.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
 
 @Slf4j
@@ -135,10 +136,9 @@ public class DtdProducer implements Serializable{
 				String ret = value;
 				
 				String[] rcArr = ret.split(";;;");
-				DtdKey dtdKey = new DtdKey(
-						rcArr[0], rcArr[1], rcArr[2]
-				);
+				
 				DtdRecord dtdR = new DtdRecord(
+						rcArr[0] + "&" + rcArr[2] + "&" + rcArr[1],
 						rcArr[0], rcArr[1], rcArr[2], rcArr[3], rcArr[4], rcArr[5], rcArr[6], rcArr[7], rcArr[8], rcArr[9],
 						rcArr[10], rcArr[11], rcArr[12], rcArr[13], rcArr[14], rcArr[15], rcArr[16], rcArr[17], rcArr[18], rcArr[19],
 						rcArr[20], rcArr[21], Instant.now().toEpochMilli()
@@ -146,7 +146,7 @@ public class DtdProducer implements Serializable{
 				
 				Message<DtdRecord> message = MessageBuilder
 						.withPayload(dtdR)
-						.setHeader(KafkaHeaders.MESSAGE_KEY, dtdR.getEntry_user_id())
+						.setHeader(KafkaHeaders.MESSAGE_KEY, dtdR.getEntryUserId())
 						.build();
 				
 				DtdProducer.oracleSauce.send(message);
@@ -172,73 +172,4 @@ public class DtdProducer implements Serializable{
 		};
 	}
 
-	@Data
-	@AllArgsConstructor
-	@NoArgsConstructor
-	public class DtdRecord {
-		private String part_tran_srl_num;
-	    private String tran_date;
-	    private String tran_id;
-//	    private String amt_reservation_ind;
-//	    private String bank_code;
-	    private String br_code;
-//	    private String crncy_code;
-	    private String cust_id;
-	    private String del_flg;
-	    private String entry_date;
-	    private String entry_user_id;
-//	    private String fx_tran_amt;
-//	    private String gl_sub_head_code;
-//	    private String instrmnt_alpha;
-//	    private String instrmnt_date;
-//	    private String instrmnt_num;
-//	    private String instrmnt_type;
-	    private String lchg_time;
-	    private String lchg_user_id;
-//	    private String module_id;
-//	    private String navigation_flg;
-	    private String part_tran_type;
-//	    private String prnt_advc_ind;
-	    private String pstd_date;
-	    private String pstd_flg;
-	    private String pstd_user_id;
-//	    private String rate;
-//	    private String rate_code;
-//	    private String rcre_time;
-//	    private String rcre_user_id;
-//	    private String ref_amt;
-//	    private String ref_crncy_code;
-//	    private String ref_num;
-//	    private String reservation_amt;
-//	    private String restrict_modify_ind;
-//	    private String rpt_code;
-	    private String sol_id;
-	    private String tran_amt;
-	    private String tran_crncy_code;
-	    private String tran_particular;
-//	    private String tran_particular_2;
-//	    private String tran_particular_code;
-	    private String tran_rmks;
-	    private String tran_sub_type;
-//	    private String tran_type;
-//	    private String trea_rate;
-//	    private String trea_ref_num;
-//	    private String ts_cnt;
-	    private String value_date;
-//	    private String vfd_date;
-//	    private String vfd_user_id;
-//	    private String voucher_print_flg;
-	    private String acid;
-//	    private Key key;
-	    private long log_time;
-	}
-	
-	@Data
-	@AllArgsConstructor
-	public class DtdKey {
-		private String part_tran_srl_num;
-		private String tran_date;
-		private String tran_id;
-	}
-	
 }

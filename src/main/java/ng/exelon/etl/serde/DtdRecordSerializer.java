@@ -6,7 +6,8 @@ import org.apache.kafka.common.serialization.Serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
+import ng.exelon.etl.model.DtdRecord;
+
 
 public class DtdRecordSerializer implements Serializer<DtdRecord> {
 

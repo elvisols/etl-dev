@@ -7,8 +7,6 @@ import org.apache.kafka.common.serialization.Serializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ng.exelon.etl.domain.UserStats;
-import ng.exelon.etl.service.DtdProducer.DtdKey;
-import ng.exelon.etl.service.DtdProducer.DtdRecord;
 
 public class UserStatSerializer implements Serializer<UserStats> {
 
