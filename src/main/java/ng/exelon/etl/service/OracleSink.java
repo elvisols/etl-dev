@@ -7,13 +7,12 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.state.WindowStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Component;
-
 
 import ng.exelon.etl.domain.UserStats;
 import ng.exelon.etl.model.DtdRecord;
@@ -23,9 +22,17 @@ import ng.exelon.etl.util.EtlBindings;
 @Component
 public class OracleSink {
 
+	@Autowired
+	DtdRecordService dtdService;
+	
 	@StreamListener
 	@SendTo(EtlBindings.USER_STAT_OUT)
 	public KStream<String, UserStats> process(@Input(EtlBindings.ORACLE_SOURCE_IN) KStream<String, DtdRecord> records) {
+		// push to ES
+		records.foreach((k, v) -> {
+			dtdService.save(v);
+		});
+		
 		return records
 			.groupByKey()
 			.windowedBy(TimeWindows.of(TimeUnit.SECONDS.toMillis(6)).advanceBy(TimeUnit.SECONDS.toMillis(1)))

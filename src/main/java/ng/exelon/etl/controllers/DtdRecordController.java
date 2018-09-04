@@ -1,7 +1,5 @@
 package ng.exelon.etl.controllers;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,7 +48,7 @@ public class DtdRecordController {
 	 * @method GET
 	 * @return result as list of dtd object
 	 */
-	@GetMapping(value="/{custId}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value="/custid/{custid}", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ApiOperation(value = "Get all DTD Records by Cust id")
 	public DtdRecordDTO findDtdRecordsByCustId(@PathVariable String custid, @RequestParam(value = "page", defaultValue="0") int page, @RequestParam(value = "size", defaultValue="10") int size) {
 		Page<DtdRecord> dtdRecords = dtdService.findByCustId(custid, PageRequest.of(page, size));
@@ -68,7 +66,7 @@ public class DtdRecordController {
 	 * @method GET
 	 * @return result as list of dtd object
 	 */
-	@GetMapping(value="/{acid}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value="/acid/{acid}", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ApiOperation(value = "Get all DTD Records by acid id")
 	public DtdRecordDTO findDtdRecordsByAcidId(@PathVariable String acid, @RequestParam(value = "page", defaultValue="0") int page, @RequestParam(value = "size", defaultValue="10") int size) {
 		Page<DtdRecord> dtdRecords = dtdService.findByAcid(acid, PageRequest.of(page, size));
@@ -86,7 +84,7 @@ public class DtdRecordController {
 	 * @method GET
 	 * @return result as list of dtd object
 	 */
-	@GetMapping(value="/{partTranType}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value="/parttrantype/{partTranType}", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ApiOperation(value = "Get all DTD Records by PartTranType")
 	public DtdRecordDTO findDtdRecordsByPartTranType(@PathVariable String partTranType, @RequestParam(value = "page", defaultValue="0") int page, @RequestParam(value = "size", defaultValue="10") int size) {
 		Page<DtdRecord> dtdRecords = dtdService.findByPartTranType(partTranType, PageRequest.of(page, size));
@@ -104,7 +102,7 @@ public class DtdRecordController {
 	 * @method GET
 	 * @return result as list of dtd object
 	 */
-	@GetMapping(value="/{partTranParticular}", produces=MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value="/parttranparticular/{partTranParticular}", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ApiOperation(value = "Get all DTD Records by PartTranParticular")
 	public DtdRecordDTO findDtdRecordsByPartTranParticular(@PathVariable String partTranParticular, @RequestParam(value = "page", defaultValue="0") int page, @RequestParam(value = "size", defaultValue="10") int size) {
 		Page<DtdRecord> dtdRecords = dtdService.findByPartTranParticular(partTranParticular, PageRequest.of(page, size));
@@ -122,7 +120,7 @@ public class DtdRecordController {
 	 * @method GET
 	 * @return result as list of dtd object
 	 */
-	@GetMapping(value="/valueDate", produces=MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value="/valuedate/valueDate", produces=MediaType.APPLICATION_JSON_VALUE)
 //	@ApiOperation(value = "Get all DTD Records by ValueDate")
 	public DtdRecordDTO findDtdRecordsByValueDate(
 			@RequestParam(value = "start-date", required = true) String startDate, @RequestParam(value = "end-date", required = true) String endDate,

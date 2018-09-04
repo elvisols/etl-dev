@@ -24,9 +24,9 @@
 		<java.version>1.8</java.version>
 		<spring-cloud.version>Finchley.SR1</spring-cloud.version>
 		<flink.version>1.0.3</flink.version>
-		<spring-data-elasticsearch.version>3.0.8.RELEASE</spring-data-elasticsearch.version>
+		<spring-data-elasticsearch.version>3.0.9.RELEASE</spring-data-elasticsearch.version>
         <jna.version>4.5.2</jna.version>
-        <elasticsearch.version>5.4.0</elasticsearch.version>
+        <elasticsearch.version>5.6.0</elasticsearch.version>
         <fastjson.version>1.2.47</fastjson.version>
         <spatial4j.version>0.6</spatial4j.version>
         <jts.version>1.13</jts.version>
@@ -37,6 +37,16 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+		        <exclusion>
+		            <artifactId>logback-classic</artifactId>
+		            <groupId>ch.qos.logback</groupId>
+		        </exclusion>
+		        <exclusion>
+		            <artifactId>log4j-over-slf4j</artifactId>
+		            <groupId>org.slf4j</groupId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
@@ -151,11 +161,11 @@
             </exclusions>
         </dependency>
         
-        <dependency>
+<!--         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
-        </dependency>
+        </dependency> -->
         
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
@@ -174,7 +184,16 @@
 			<artifactId>spring-cloud-stream-test-support</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- <exclusions>
+		    <exclusion>
+	            <artifactId>logback-classic</artifactId>
+	            <groupId>ch.qos.logback</groupId>
+	        </exclusion>
+		</exclusions> -->
+		 
 	</dependencies>
+	
 
 	<dependencyManagement>
 		<dependencies>

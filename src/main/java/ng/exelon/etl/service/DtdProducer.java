@@ -22,9 +22,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ng.exelon.etl.model.DtdRecord;
 import ng.exelon.etl.util.EtlBindings;
@@ -152,7 +149,6 @@ public class DtdProducer implements Serializable{
 				DtdProducer.oracleSauce.send(message);
 
 				DtdProducer.LAST_PULL = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-//				log.info("+++ Last Pull now is " + DtdProducer.LAST_PULL);
 			});
 		env.execute();
 	}
